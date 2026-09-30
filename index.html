@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redes Socioproductivas — Sur del Tolima</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --v1:#667B37;--v2:#B6B649;--v3:#91915B;
+  --az:#1B4F72;--dk:#1A1A1A;--lt:#F2F2F0;--md:#4A4A4A;
+}
+body{font-family:Arial,sans-serif;display:flex;height:100vh;overflow:hidden}
+#panel{width:300px;min-width:260px;height:100vh;background:#fff;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.15);z-index:1000;overflow:hidden}
+#ph{background:var(--dk);color:#fff;padding:14px;flex-shrink:0}
+#ph h1{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.4}
+#ph p{font-size:10px;color:#999;margin-top:3px}
+#pb{flex:1;overflow-y:auto;padding:10px}
+.sec{margin-bottom:12px}
+.st{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #e8e8e0}
+.tab-row{display:flex;gap:3px;margin-bottom:8px}
+.tab{flex:1;padding:5px 3px;text-align:center;font-size:9.5px;font-weight:700;border-radius:5px;cursor:pointer;background:var(--lt);color:var(--md);border:2px solid transparent;transition:all .2s}
+.tab.a{color:#fff}
+.tab[data-e="ALL"].a{background:var(--dk)}
+.tab[data-e="E1"].a{background:var(--v1)}
+.tab[data-e="E2"].a{background:var(--v2);color:#333}
+.tab[data-e="E3"].a{background:var(--v3)}
+.esc-d{font-size:9.5px;color:#666;padding:5px 7px;background:var(--lt);border-radius:5px;line-height:1.4}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:7px;margin-bottom:3px;background:var(--lt);cursor:pointer;transition:background .15s}
+.tr:hover{background:#e8e8e0}
+.tl{display:flex;align-items:center;gap:7px}
+.td{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.tlab{font-size:10.5px;color:var(--dk);font-weight:500}
+.tsub{font-size:8.5px;color:#999;margin-top:1px}
+.sw{width:28px;height:16px;background:#ccc;border-radius:8px;position:relative;transition:background .2s;flex-shrink:0}
+.sw.on{background:var(--v1)}
+.sw::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on::after{left:14px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.sb{background:var(--lt);border-radius:7px;padding:8px 6px;text-align:center}
+.sv{font-size:18px;font-weight:700;color:var(--dk);line-height:1}
+.sl{font-size:7.5px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.bi{margin-bottom:5px}
+.blr{display:flex;justify-content:space-between;margin-bottom:2px}
+.bl{font-size:9px;color:var(--md)}
+.bv{font-size:9px;color:var(--dk);font-weight:600}
+.bt{height:5px;background:#e8e8e0;border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px}
+.vi{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.vl{height:3px;width:24px;border-radius:2px;flex-shrink:0}
+.vlab{font-size:9.5px;color:var(--md)}
+.vkm{font-size:9px;color:#888;margin-left:auto}
+#map{flex:1}
+#bot{position:fixed;bottom:0;left:300px;right:0;background:rgba(26,26,26,.92);color:#fff;padding:6px 14px;display:flex;align-items:center;gap:16px;font-size:9px;z-index:999}
+.bi2{display:flex;align-items:center;gap:5px}
+.bd{width:7px;height:7px;border-radius:50%}
+</style>
+</head>
+<body>
+
+<div id="panel">
+  <div id="ph">
+    <h1>Red de Escenarios Socioproductivos<br>Sur del Tolima</h1>
+    <p>68.155 ha · 7 municipios · 3 escenarios</p>
+  </div>
+  <div id="pb">
+
+    <div class="sec">
+      <div class="st">Escenario productivo</div>
+      <div class="tab-row">
+        <div class="tab a" data-e="ALL">Todos</div>
+        <div class="tab" data-e="E1">RED 1</div>
+        <div class="tab" data-e="E2">RED 2</div>
+        <div class="tab" data-e="E3">RED 3</div>
+      </div>
+      <div class="esc-d" id="ed">Visualizando todos los escenarios simultáneamente.</div>
+    </div>
+
+    <div class="sec">
+      <div class="st">Capas del mapa</div>
+      <div class="tr" onclick="tog('area')">
+        <div class="tl"><div class="td" style="background:transparent;border:2px solid var(--v1)"></div>
+          <div><div class="tlab">Polígono de actuación</div><div class="tsub">68.155 ha</div></div></div>
+        <div class="sw on" id="sw-area"></div>
+      </div>
+      <div class="tr" onclick="tog('veredas')">
+        <div class="tl"><div class="td" style="background:linear-gradient(135deg,#FEF3C7,#DC2626)"></div>
+          <div><div class="tlab">Veredas por producción</div><div class="tsub">157 veredas — ranking TON/AÑO</div></div></div>
+        <div class="sw on" id="sw-veredas"></div>
+      </div>
+      <div class="tr" onclick="tog('vias')">
+        <div class="tl"><div class="td" style="background:var(--az)"></div>
+          <div><div class="tlab">Red vial propuesta</div><div class="tsub">N1 · N2 · N3</div></div></div>
+        <div class="sw on" id="sw-vias"></div>
+      </div>
+      <div class="tr" onclick="tog('eq')">
+        <div class="tl"><div class="td" style="background:#E67E22"></div>
+          <div><div class="tlab">Equipamientos propuestos</div><div class="tsub">Tipo I · II · III</div></div></div>
+        <div class="sw on" id="sw-eq"></div>
+      </div>
+      <div class="tr" onclick="tog('serv')">
+        <div class="tl"><div class="td" style="background:#8E44AD"></div>
+          <div><div class="tlab">Servicios existentes</div><div class="tsub">Salud · Educación · Comercio</div></div></div>
+        <div class="sw on" id="sw-serv"></div>
+      </div>
+      <div class="tr" onclick="tog('ext')">
+        <div class="tl"><div class="td" style="background:transparent;border:2px dashed var(--az)"></div>
+          <div><div class="tlab">Conexiones externas</div><div class="tsub">Ibagué · Neiva · Bogotá</div></div></div>
+        <div class="sw" id="sw-ext"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="st">Resumen del proyecto</div>
+      <div class="sg">
+        <div class="sb"><div class="sv" style="color:var(--v1)">68.155</div><div class="sl">Hectáreas</div></div>
+        <div class="sb"><div class="sv" id="neq">—</div><div class="sl">Equipamientos</div></div>
+        <div class="sb"><div class="sv" style="color:var(--az)">1.303</div><div class="sl">km de vías</div></div>
+        <div class="sb"><div class="sv" style="color:#E67E22">5.052</div><div class="sl">Empleos</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="st">Producción anual estimada</div>
+      <div class="bi"><div class="blr"><span class="bl">RED 1 — Cacao/Café</span><span class="bv">$564M</span></div><div class="bt"><div class="bf" style="width:46%;background:var(--v1)"></div></div></div>
+      <div class="bi"><div class="blr"><span class="bl">RED 2 — Plátano/Aguacate</span><span class="bv">$1.224M</span></div><div class="bt"><div class="bf" style="width:100%;background:var(--v2)"></div></div></div>
+      <div class="bi"><div class="blr"><span class="bl">RED 3 — Maíz/Caña</span><span class="bv">$607M</span></div><div class="bt"><div class="bf" style="width:50%;background:var(--v3)"></div></div></div>
+    </div>
+
+    <div class="sec">
+      <div class="st">Jerarquía vial</div>
+      <div class="vi"><div class="vl" style="background:var(--az);height:4px"></div><span class="vlab">N1 — Principal</span><span class="vkm">96 km</span></div>
+      <div class="vi"><div class="vl" style="background:var(--v1);height:3px"></div><span class="vlab">N2 — Secundaria</span><span class="vkm">318 km</span></div>
+      <div class="vi"><div class="vl" style="background:var(--v2);height:2px"></div><span class="vlab">N3 — Terciaria</span><span class="vkm">889 km</span></div>
+    </div>
+
+    <div class="sec">
+      <div class="st">Tipología equipamientos</div>
+      <div class="vi"><div class="td" style="width:10px;height:10px;border-radius:50%;background:#27AE60;flex-shrink:0"></div><span class="vlab">Tipo I — Producción primaria</span></div>
+      <div class="vi"><div class="td" style="width:10px;height:10px;border-radius:3px;background:#E67E22;flex-shrink:0"></div><span class="vlab">Tipo II — Transformación</span></div>
+      <div class="vi"><div class="td" style="width:10px;height:10px;background:var(--az);flex-shrink:0;transform:rotate(45deg)"></div><span class="vlab">Tipo III — Servicios</span></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="map"></div>
+
+<div id="bot">
+  <div class="bi2"><div class="bd" style="background:var(--v1)"></div>RED 1: Cacao · Café · Café Sombrio</div>
+  <div class="bi2"><div class="bd" style="background:var(--v2)"></div>RED 2: Plátano · Aguacate · Caucho</div>
+  <div class="bi2"><div class="bd" style="background:var(--v3)"></div>RED 3: Maíz · Caña · Agroforestal</div>
+  <div style="margin-left:auto;color:#555;font-size:8px">IGAC · DANE · FAO ECOCROP · OSM · 2024–2025</div>
+</div>
+
+<script>
+// ── MAPA BASE CON LEAFLET ───────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [3.75, -75.15],
+  zoom: 9,
+  zoomControl: false,
+});
+L.control.zoom({ position:'bottomright' }).addTo(map);
+L.control.scale({ metric:true, imperial:false, position:'bottomright' }).addTo(map);
+
+// Tile providers — intentar en orden
+const tiles = [
+  { url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attr:'© OpenStreetMap', sub:['a','b','c'] },
+  { url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    attr:'© CartoDB', sub:['a','b','c','d'] },
+  { url:'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+    attr:'© OpenStreetMap DE', sub:null },
+];
+
+let tileLayer = null;
+function tryTile(idx) {
+  if(idx >= tiles.length) { console.warn('Todos los tiles fallaron'); return; }
+  const t = tiles[idx];
+  const opts = { attribution:t.attr, maxZoom:19 };
+  if(t.sub) opts.subdomains = t.sub;
+  const layer = L.tileLayer(t.url, opts);
+  layer.on('tileerror', () => { map.removeLayer(layer); tryTile(idx+1); });
+  layer.addTo(map);
+  tileLayer = layer;
+}
+tryTile(0);
+
+// ── COLORES ──────────────────────────────────────────────────────────────────
+const VIA_COLOR = {
+  'N1-Principal':'#1B4F72','N2-Secundaria':'#667B37',
+  'N3-Terciaria':'#B6B649','N3-Camino vecinal':'#91915B',
+  'N3-Servicio':'#BDC3C7','Sendero':'#D5D8DC',
+};
+const VIA_W = {
+  'N1-Principal':5,'N2-Secundaria':3,'N3-Terciaria':2,
+  'N3-Camino vecinal':1.5,'N3-Servicio':1,'Sendero':0.8,
+};
+const TIPO_COLOR = {
+  'Tipo I - Produccion':'#27AE60',
+  'Tipo II - Transformacion':'#E67E22',
+  'Tipo III - Servicios':'#2980B9',
+};
+const CAT_COLOR = {
+  'Educacion':'#3498DB','Salud':'#E74C3C',
+  'Comercio':'#F39C12','Asentamiento':'#9B59B6',
+};
+const TON_COLOR = v => {
+  if(v>30000) return '#7F1D1D';
+  if(v>15000) return '#DC2626';
+  if(v>8000)  return '#F59E0B';
+  if(v>3000)  return '#FCD34D';
+  return '#FEF3C7';
+};
+
+// ── GRUPOS DE CAPAS ──────────────────────────────────────────────────────────
+const grp = {
+  area:    L.layerGroup().addTo(map),
+  veredas: L.layerGroup().addTo(map),
+  vias:    L.layerGroup().addTo(map),
+  eq:      L.layerGroup().addTo(map),
+  serv:    L.layerGroup().addTo(map),
+  ext:     L.layerGroup(),
+};
+const vis = { area:true,veredas:true,vias:true,eq:true,serv:true,ext:false };
+
+// ── CARGAR GEOJSON ────────────────────────────────────────────────────────────
+async function load(file) {
+  try {
+    const r = await fetch(file);
+    if(!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch(e) {
+    console.warn('No se pudo cargar:', file, e.message);
+    return null;
+  }
+}
+
+let eqLayers = [];
+let currentEsc = 'ALL';
+
+(async () => {
+  // Área de estudio
+  const area = await load('area_estudio.geojson');
+  if(area) {
+    L.geoJSON(area, {
+      style:{ color:'#667B37', weight:2.5, dashArray:'6,4',
+              fillColor:'#667B37', fillOpacity:0.06 }
+    }).addTo(grp.area);
+  }
+
+  // Veredas
+  const ver = await load('veredas_produccion.geojson');
+  if(ver) {
+    L.geoJSON(ver, {
+      style: f => ({
+        fillColor: TON_COLOR(f.properties.TON_TOTAL||0),
+        fillOpacity:0.65, color:'#fff', weight:0.5,
+      }),
+      onEachFeature:(f,l) => {
+        const p=f.properties;
+        l.bindPopup(`<b>${p.NOMBRE||p.VEREDA||'Vereda'}</b><br>
+          Producción total: <b>${(p.TON_TOTAL||0).toLocaleString()} ton/año</b><br>
+          Categoría: ${p.CATEGORIA||'—'}<br>
+          E1: ${(p.TON_E1||0).toLocaleString()} · E2: ${(p.TON_E2||0).toLocaleString()} · E3: ${(p.TON_E3||0).toLocaleString()}`);
+      }
+    }).addTo(grp.veredas);
+  }
+
+  // Vías propuestas
+  const vias = await load('vias_propuesta.geojson');
+  if(vias) {
+    L.geoJSON(vias, {
+      style: f => {
+        const n=f.properties.NIVEL_PROP||'';
+        return { color:VIA_COLOR[n]||'#999', weight:VIA_W[n]||1, opacity:0.85 };
+      },
+      onEachFeature:(f,l) => {
+        const p=f.properties;
+        l.bindPopup(`<b>${p.NOMBRE_CORR||p.name||'Vía'}</b><br>
+          Nivel: ${p.NIVEL_PROP||'—'}<br>
+          Intervención: ${p.INTERVENCION||'—'}<br>
+          Prioridad: ${p.PRIORIDAD||'—'}`);
+      }
+    }).addTo(grp.vias);
+  }
+
+  // Vías externas
+  const vext = await load('vias_salida.geojson');
+  if(vext) {
+    L.geoJSON(vext, {
+      style:{ color:'#2E86C1', weight:2, dashArray:'8,4', opacity:0.7 },
+      onEachFeature:(f,l) => {
+        const p=f.properties;
+        l.bindPopup(`<b>Conexión externa</b><br>Destino: ${p.DESTINO||'—'}<br>Productos: ${p.PRODUCTOS||'—'}`);
+      }
+    }).addTo(grp.ext);
+  }
+
+  // Equipamientos E1+E2+E3
+  let neq = 0;
+  for(const esc of ['E1','E2','E3']) {
+    const data = await load(`infra_${esc.toLowerCase()}.geojson`);
+    if(!data) continue;
+    data.features.forEach(f => {
+      const p=f.properties;
+      if(!f.geometry||f.geometry.type!=='Point') return;
+      const [lng,lat]=f.geometry.coordinates;
+      const tipo=p.TIPO_INFRA||'';
+      const color=TIPO_COLOR[tipo]||'#95A5A6';
+      const r=tipo.includes('II')?8:tipo.includes('III')?7:6;
+      const mk=L.circleMarker([lat,lng],{
+        radius:r, fillColor:color, fillOpacity:0.85,
+        color:'#fff', weight:1.5,
+      });
+      mk.bindPopup(`<b>${p.NOMBRE_EQUIP||'Equipamiento'}</b><br>
+        Vereda: ${p.VEREDA||'—'}<br>
+        Cultivo: ${p.CULTIVO||'—'}<br>
+        Tipo: ${tipo}<br>
+        Producción: ${(p.TON_VEREDA||0).toLocaleString()} ton/año<br>
+        Área: ${(p.AREA_EQUIP_M2||0).toLocaleString()} m²<br>
+        <span style="background:${esc==='E1'?'#667B37':esc==='E2'?'#B6B649':'#91915B'};color:${esc==='E2'?'#333':'#fff'};padding:2px 8px;border-radius:10px;font-size:10px">${esc}</span>`);
+      mk._esc = esc;
+      eqLayers.push(mk);
+      mk.addTo(grp.eq);
+      neq++;
+    });
+  }
+  document.getElementById('neq').textContent = neq.toLocaleString();
+
+  // Servicios existentes
+  const serv = await load('servicios.geojson');
+  if(serv) {
+    L.geoJSON(serv, {
+      pointToLayer:(f,latlng) => L.circleMarker(latlng,{
+        radius:6,
+        fillColor:CAT_COLOR[f.properties.CATEGORIA]||'#BDC3C7',
+        fillOpacity:0.9, color:'#fff', weight:2,
+      }),
+      onEachFeature:(f,l) => {
+        const p=f.properties;
+        l.bindPopup(`<b>${p.NOMBRE||p.SUBTIPO||'Servicio'}</b><br>
+          Categoría: ${p.CATEGORIA||'—'}<br>
+          Tipo: ${p.SUBTIPO||'—'}<br>
+          Municipio: ${p.MUNICIPIO||'—'}`);
+      }
+    }).addTo(grp.serv);
+  }
+})();
+
+// ── CONTROLES UI ──────────────────────────────────────────────────────────────
+const escDescs = {
+  ALL:'Visualizando todos los escenarios simultáneamente.',
+  E1:'RED 1 — Cacao (Cl. II) · Café (Cl. III) · Café Sombrio (Cl. IV)',
+  E2:'RED 2 — Plátano (Cl. II) · Aguacate Hass (Cl. III) · Caucho (Cl. IV)',
+  E3:'RED 3 — Maíz (Cl. II) · Caña Panelera (Cl. III) · Agroforestal (Cl. IV)',
+};
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('a'));
+    t.classList.add('a');
+    currentEsc = t.dataset.e;
+    document.getElementById('ed').textContent = escDescs[currentEsc];
+    eqLayers.forEach(mk => {
+      if(currentEsc==='ALL' || mk._esc===currentEsc) {
+        if(!grp.eq.hasLayer(mk)) grp.eq.addLayer(mk);
+      } else {
+        grp.eq.removeLayer(mk);
+      }
+    });
+  });
+});
+
+function tog(id) {
+  vis[id] = !vis[id];
+  const sw = document.getElementById('sw-'+id);
+  if(sw) sw.classList.toggle('on', vis[id]);
+  if(vis[id]) map.addLayer(grp[id]);
+  else map.removeLayer(grp[id]);
+}
+</script>
+</body>
+</html>
