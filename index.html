@@ -206,7 +206,7 @@ body{font-family:'Inter',sans-serif;background:#fff;color:var(--dk);height:100vh
       </div>
       <div class="trow" onclick="tog('ext')">
         <div class="tleft"><div class="tdot" style="background:transparent;border:1.5px dashed var(--az)"></div><div><div class="tname">Conexiones ext.</div><div class="tsub">Ibagué · Neiva</div></div></div>
-        <div class="sw2" id="sw-ext"></div>
+        <div class="sw2 on" id="sw-ext"></div>
       </div>
     </div>
     <div id="legend">
@@ -236,8 +236,8 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({metric:true,imperial:false,position:'bottomright'}).addTo(map);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,subdomains:['a','b','c']}).addTo(map);
 
-const VC={'N1-Principal':'#0D2B4E','N2-Secundaria':'#3A5A1C','N3-Terciaria':'#8B8B00','N3-Camino vecinal':'#6B5B3E','N3-Servicio':'#8B8B8B','Sendero':'#AAAAAA'};
-const VW={'N1-Principal':16,'N2-Secundaria':9,'N3-Terciaria':5,'N3-Camino vecinal':3,'N3-Servicio':2,'Sendero':1,'Sin clasificar':1.5};
+const VC={'N1-Principal':'#C0392B','N2-Secundaria':'#2E7D32','N3-Terciaria':'#F5CBA7','N3-Camino vecinal':'#AEB6BF','N3-Servicio':'#85C1E9','Sendero':'#CCCCCC','Conexion externa':'#8B4513','N1-Salida poligono':'#C0392B','N2-Salida poligono':'#2E7D32','Sin clasificar':'#BBBBBB'};
+const VW={'N1-Principal':8,'N2-Secundaria':4,'N3-Terciaria':2,'N3-Camino vecinal':1.5,'N3-Servicio':1,'Sendero':0.8,'Conexion externa':3,'N1-Salida poligono':8,'N2-Salida poligono':4,'Sin clasificar':1};
 const TC={'Tipo I - Produccion':'#27AE60','Tipo II - Transformacion':'#E67E22','Tipo III - Servicios':'#2980B9'};
 const CC={'Educacion':'#3498DB','Salud':'#E74C3C','Comercio':'#F39C12','Asentamiento':'#9B59B6'};
 const TON=v=>v>30000?'#7F1D1D':v>15000?'#DC2626':v>8000?'#F59E0B':v>3000?'#FCD34D':'#FEF3C7';
@@ -248,10 +248,10 @@ const grp={
   burbujas:L.layerGroup().addTo(map),
   vias:L.layerGroup().addTo(map),
   serv:L.layerGroup().addTo(map),
-  ext:L.layerGroup(),
+  ext:L.layerGroup().addTo(map),
   eq_hover:L.layerGroup().addTo(map), // equipamientos solo en hover
 };
-const vis={area:true,veredas:true,burbujas:true,vias:true,serv:true,ext:false};
+const vis={area:true,veredas:true,burbujas:true,vias:true,serv:true,ext:true};
 
 let verData=[], currentEsc='ALL', eqByVereda={}, currentEscLayers=[];
 
@@ -388,7 +388,9 @@ function initData(){
   }).addTo(grp.vias);
 
   // Vías externas
-  if(D.vext) L.geoJSON(D.vext,{style:{color:VC['N1-Principal'],weight:2,dashArray:'8,4',opacity:.6}}).addTo(grp.ext);
+  if(D.vext) L.geoJSON(D.vext,{
+    style:f=>{const nv=f.properties.NIVEL_PROP||'Sin clasificar';return{color:VC[nv]||'#888',weight:VW[nv]||2,opacity:.85,lineCap:'round',lineJoin:'round'};},
+  }).addTo(grp.ext);
 
   // Servicios
   if(D.serv) L.geoJSON(D.serv,{
