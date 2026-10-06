@@ -343,6 +343,12 @@ map.on('load',()=>{
       filter:['==',['get','NIVEL_PROP'],'N2-Secundaria'],
       paint:{'line-color':'#1A5E20','line-width':2,'line-opacity':1}});
   }
+  // Mover N2 y N3 antes de burbujas también
+  if(map.getLayer('vias-n2')) map.moveLayer('vias-n2','burbujas-circle');
+  if(map.getLayer('vias-n3')) map.moveLayer('vias-n3','burbujas-circle');
+  if(map.getLayer('vias-n3b')) map.moveLayer('vias-n3b','burbujas-circle');
+  if(map.getLayer('vias-ext-n2')) map.moveLayer('vias-ext-n2','burbujas-circle');
+  if(map.getLayer('vias-ext-conn')) map.moveLayer('vias-ext-conn','burbujas-circle');
   // VÍAS SALIDA
   if(D.vext){
     map.addSource('vext',{type:'geojson',data:D.vext});
@@ -380,16 +386,18 @@ map.on('load',()=>{
       new mapboxgl.Popup().setLngLat(e.lngLat).setHTML(`<b>${p.NOMBRE||'Servicio'}</b><br>${p.CATEGORIA||'—'} · ${p.MUNICIPIO||'—'}`).addTo(map);
     });
   }
-  // N1 PRINCIPAL AL FINAL — encima de todo
+  // N1 PRINCIPAL — antes de burbujas para que no quede tapada
   if(D.vias){
     map.addLayer({id:'vias-n1',type:'line',source:'vias',
       filter:['==',['get','NIVEL_PROP'],'N1-Principal'],
-      paint:{'line-color':'#C0392B','line-width':4,'line-opacity':1}});
+      paint:{'line-color':'#C0392B','line-width':4,'line-opacity':1}},
+      'burbujas-circle');
   }
   if(D.vext){
     map.addLayer({id:'vias-ext-n1',type:'line',source:'vext',
       filter:['==',['get','NIVEL_PROP'],'N1-Salida poligono'],
-      paint:{'line-color':'#C0392B','line-width':6,'line-opacity':1}});
+      paint:{'line-color':'#C0392B','line-width':6,'line-opacity':1}},
+      'burbujas-circle');
   }
   // ZOOM AL ÁREA
   if(D.area&&D.area.features.length){
