@@ -86,9 +86,34 @@ body{font-family:'Inter',sans-serif;background:#fff;color:var(--dk);height:100vh
 .btn-3d.active{background:var(--v1);color:#fff;border-color:var(--v1)}
 .mapboxgl-popup-content{border-radius:10px;font-family:'Inter',sans-serif;font-size:11px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .mapboxgl-ctrl-attrib{display:none!important}
+/* ── BOTONES FLOTANTES MÓVIL ── */
+.mob-btn{display:none;position:absolute;z-index:20;background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:11px;font-weight:600;cursor:pointer;color:var(--dk);box-shadow:0 2px 10px rgba(0,0,0,.15);transition:all .2s}
+.mob-btn:active{background:var(--lt)}
+/* ── RESPONSIVE MÓVIL ── */
+@media(max-width:700px){
+  #header h1{font-size:10px}
+  #header p{display:none}
+  .tag{display:none}
+  #left{position:absolute;top:0;left:0;height:100%;width:82vw;max-width:300px;transform:translateX(-100%);transition:transform .3s ease;z-index:30;box-shadow:4px 0 20px rgba(0,0,0,.15)}
+  #left.open{transform:translateX(0)}
+  #right{position:absolute;top:0;right:0;height:100%;width:72vw;max-width:220px;transform:translateX(100%);transition:transform .3s ease;z-index:30;box-shadow:-4px 0 20px rgba(0,0,0,.15)}
+  #right.open{transform:translateX(0)}
+  #map{width:100vw}
+  #ctrl-3d{right:12px;bottom:30px}
+  .mob-btn{display:block}
+  #mob-left{top:60px;left:10px}
+  #mob-right{top:60px;right:10px}
+  #mob-close-l{position:absolute;top:10px;right:10px;background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--md)}
+  #mob-close-r{position:absolute;top:10px;right:10px;background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--md)}
+  .mob-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:29}
+  .mob-overlay.show{display:block}
+}
 </style>
 </head>
 <body>
+<div class="mob-overlay" id="mob-ov"></div>
+<button class="mob-btn" id="mob-left">☰ Redes</button>
+<button class="mob-btn" id="mob-right">⚙ Capas</button>
 <div id="header">
   <div>
     <h1>Red de Escenarios Socioproductivos — Sur del Tolima</h1>
@@ -100,7 +125,8 @@ body{font-family:'Inter',sans-serif;background:#fff;color:var(--dk);height:100vh
 </div>
 <div id="main">
   <div id="left">
-    <div id="left-top">
+    <div id="left-top" style="position:relative">
+      <button id="mob-close-l" onclick="closePanels()">✕</button>
       <div class="esc-tabs">
         <div class="etab a" data-e="ALL">Todos</div>
         <div class="etab" data-e="E1">RED 1</div>
@@ -136,7 +162,7 @@ body{font-family:'Inter',sans-serif;background:#fff;color:var(--dk);height:100vh
   </div>
   <div id="map"></div>
   <div id="right">
-    <div id="right-top"><h3>Capas del mapa</h3></div>
+    <div id="right-top" style="position:relative"><h3>Capas del mapa</h3><button id="mob-close-r" onclick="closePanels()">✕</button></div>
     <div id="layer-list">
       <div class="trow" onclick="togLayer('area')">
         <div class="tleft"><div class="tdot" style="background:transparent;border:1.5px solid var(--v1)"></div><div><div class="tname">Polígono</div><div class="tsub">68.155 ha</div></div></div>
@@ -446,6 +472,24 @@ function resetView(){
     map.fitBounds([[mnLng,mnLat],[mxLng,mxLat]],{padding:40,pitch:0,bearing:0});
   }
 }
+</script>
+<script>
+function closePanels(){
+  document.getElementById('left').classList.remove('open');
+  document.getElementById('right').classList.remove('open');
+  document.getElementById('mob-ov').classList.remove('show');
+}
+document.getElementById('mob-left').addEventListener('click',function(){
+  document.getElementById('left').classList.toggle('open');
+  document.getElementById('right').classList.remove('open');
+  document.getElementById('mob-ov').classList.toggle('show',document.getElementById('left').classList.contains('open'));
+});
+document.getElementById('mob-right').addEventListener('click',function(){
+  document.getElementById('right').classList.toggle('open');
+  document.getElementById('left').classList.remove('open');
+  document.getElementById('mob-ov').classList.toggle('show',document.getElementById('right').classList.contains('open'));
+});
+document.getElementById('mob-ov').addEventListener('click',closePanels);
 </script>
 </body>
 </html>
