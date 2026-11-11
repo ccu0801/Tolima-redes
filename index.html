@@ -243,7 +243,9 @@ function showVC(p){
 }
 function buildRanking(data,esc){
   const getT=v=>{const e1=parseFloat(v.TON_E1||0),e2=parseFloat(v.TON_E2||0),e3=parseFloat(v.TON_E3||0);return esc==='E1'?e1:esc==='E2'?e2:esc==='E3'?e3:e1+e2+e3;};
-  const sorted=[...data].sort((a,b)=>getT(b)-getT(a)).slice(0,10);
+  const seen=new Set();
+  const unique=data.filter(v=>{const k=v.NOMBRE||'';if(seen.has(k))return false;seen.add(k);return true;});
+  const sorted=[...unique].sort((a,b)=>getT(b)-getT(a)).slice(0,10);
   const mx=getT(sorted[0])||1;
   const col=esc==='E1'?'var(--v1)':esc==='E2'?'var(--v2)':esc==='E3'?'var(--v3)':'#667B37';
   document.getElementById('rank-t').textContent='Top 10 veredas'+(esc!=='ALL'?' — '+esc:'');
