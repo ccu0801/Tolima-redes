@@ -247,7 +247,7 @@ const layerIds={
   veredas:['veredas-fill','veredas-line'],
   burbujas:['burbujas-circle'],
   vias:[],
-  eq:['eq-hover-circle'],
+  eq:['eq-hover-circle','eq-hover-label'],
   serv:['serv-circle'],
   ext:[],
 };
@@ -314,23 +314,59 @@ map.on('load',()=>{
       const p=e.features[0].properties;
       const key=norm(p.NOMBRE||'');
       const eq=eqByVereda[key]||[];
-      const porTipo={};
-      eq.filter(x=>currentEsc==='ALL'||x.esc===currentEsc).forEach(x=>{
-        const t=x.TIPO_INFRA||'Otros';
-        if(!porTipo[t]) porTipo[t]=[];
-        porTipo[t].push(x);
+      const escList=currentEsc==='ALL'?['E1','E2','E3']:[currentEsc];
+      // Acumular N_EQUIP_TIPO real desde los GeoJSON de ArcGIS
+      let rows='';
+      let totalMods=0;
+      let totT1=0,totT2=0,totT3=0;
+      escList.forEach(esc=>{
+        const eqEsc=eq.filter(x=>x.esc===esc);
+        if(!eqEsc.length) return;
+        const ton=parseFloat(p['TON_'+esc]||0);
+        let m1=0,m2=0,m3=0;
+        eqEsc.forEach(x=>{
+          const n=parseInt(x.N_EQUIP_TIPO||1);
+          const t=(x.TIPO_INFRA||'').toLowerCase();
+          if(t.includes('i - prod')||t.includes('tipo i')) m1+=n;
+          else if(t.includes('ii - trans')||t.includes('tipo ii')) m2+=n;
+          else if(t.includes('iii - serv')||t.includes('tipo iii')) m3+=n;
+        });
+        totT1+=m1; totT2+=m2; totT3+=m3;
+        totalMods+=m1+m2+m3;
+        const col=esc==='E1'?'var(--v1)':esc==='E2'?'var(--v2)':'var(--v3)';
+        rows+=`<tr style="border-top:1px solid #eee">
+          <td style="padding:3px 6px;font-size:9px;font-weight:600;color:${col}">${esc}</td>
+          <td style="padding:3px 4px;font-size:9px;text-align:center">${(ton/1000).toFixed(1)}k t</td>
+          <td style="padding:3px 4px;font-size:9px;text-align:center;color:#27AE60;font-weight:700">${m1}</td>
+          <td style="padding:3px 4px;font-size:9px;text-align:center;color:#E67E22;font-weight:700">${m2}</td>
+          <td style="padding:3px 4px;font-size:9px;text-align:center;color:#2980B9;font-weight:700">${m3}</td>
+        </tr>`;
       });
+      // Círculos en mapa solo al hacer hover, proporcionales al N_EQUIP_TIPO real
       const coords=e.features[0].geometry.type==='Polygon'?e.features[0].geometry.coordinates[0]:e.features[0].geometry.coordinates[0]||[];
       let clng=0,clat=0,cn=0;
       coords.forEach(c=>{clng+=c[0];clat+=c[1];cn++;});
       if(cn>0){clng/=cn;clat/=cn;}
-      const offs=[[0,0],[0.01,-0.01],[0.01,0.01],[-0.01,0.01],[-0.01,-0.01]];
-      const eqFeats=Object.entries(porTipo).map(([tipo,pts],i)=>{
-        const off=offs[i%offs.length];
-        return{type:'Feature',geometry:{type:'Point',coordinates:[clng+off[0],clat+off[1]]},properties:{tipo,count:pts.length,color:TC[tipo]||'#95A5A6'}};
-      });
+      const eqFeats=[];
+      if(totT1>0) eqFeats.push({type:'Feature',geometry:{type:'Point',coordinates:[clng-0.012,clat+0.008]},properties:{tipo:'T.I Producción',count:totT1,color:'#27AE60'}});
+      if(totT2>0) eqFeats.push({type:'Feature',geometry:{type:'Point',coordinates:[clng+0.012,clat+0.008]},properties:{tipo:'T.II Transformación',count:totT2,color:'#E67E22'}});
+      if(totT3>0) eqFeats.push({type:'Feature',geometry:{type:'Point',coordinates:[clng,clat-0.01]},properties:{tipo:'T.III Servicios',count:totT3,color:'#2980B9'}});
       map.getSource('eq-hover').setData({type:'FeatureCollection',features:eqFeats});
-      vPopup.setLngLat(e.lngLat).setHTML(`<div style="font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:#1A1A1A">${p.NOMBRE||'Vereda'}</div><div style="font-size:9px;color:#888;margin-top:2px">${(parseFloat(p.TON_TOTAL||0)/1000).toFixed(1)}k ton/año</div>`).addTo(map);
+      const html=`<div style="font-family:Inter,sans-serif;min-width:200px">
+        <div style="font-size:11px;font-weight:700;color:#1A1A1A;margin-bottom:4px">${p.NOMBRE||'Vereda'}</div>
+        <table style="width:100%;border-collapse:collapse">
+          <tr style="background:#f5f5f3">
+            <th style="padding:3px 6px;font-size:8px;text-align:left;color:#888">ESC</th>
+            <th style="padding:3px 4px;font-size:8px;color:#888">ton/año</th>
+            <th style="padding:3px 4px;font-size:8px;color:#27AE60">T.I</th>
+            <th style="padding:3px 4px;font-size:8px;color:#E67E22">T.II</th>
+            <th style="padding:3px 4px;font-size:8px;color:#2980B9">T.III</th>
+          </tr>
+          ${rows||'<tr><td colspan="5" style="padding:4px;font-size:9px;color:#aaa;text-align:center">Sin producción</td></tr>'}
+        </table>
+        <div style="font-size:8px;color:#aaa;margin-top:4px;text-align:right">Total: ${totalMods} equipamientos</div>
+      </div>`;
+      vPopup.setLngLat(e.lngLat).setHTML(html).addTo(map);
       showVC(p);
     });
     map.on('mouseleave','veredas-fill',()=>{
@@ -389,7 +425,12 @@ map.on('load',()=>{
   }
   // EQUIPAMIENTOS hover source
   map.addSource('eq-hover',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
-  map.addLayer({id:'eq-hover-circle',type:'circle',source:'eq-hover',paint:{'circle-radius':9,'circle-color':['get','color'],'circle-stroke-color':'#fff','circle-stroke-width':2,'circle-opacity':0.95}});
+  map.addLayer({id:'eq-hover-circle',type:'circle',source:'eq-hover',paint:{
+    'circle-radius':['interpolate',['linear'],['get','count'],1,8,10,14,50,20,100,28],
+    'circle-color':['get','color'],'circle-stroke-color':'#fff','circle-stroke-width':2,'circle-opacity':0.85}});
+  map.addLayer({id:'eq-hover-label',type:'symbol',source:'eq-hover',layout:{
+    'text-field':['to-string',['get','count']],'text-size':10,'text-font':['DIN Offc Pro Medium','Arial Unicode MS Bold'],'text-anchor':'center'},
+    paint:{'text-color':'#fff','text-halo-color':'rgba(0,0,0,.3)','text-halo-width':1}});
   // INDEXAR EQUIPAMIENTOS
   let neq=0;
   ['e1','e2','e3'].forEach(k=>{
