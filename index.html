@@ -326,10 +326,10 @@ map.on('load',()=>{
         let m1=0,m2=0,m3=0;
         eqEsc.forEach(x=>{
           const n=parseInt(x.N_EQUIP_TIPO||1);
-          const t=(x.TIPO_INFRA||'').toLowerCase();
-          if(t.includes('i - prod')||t.includes('tipo i')) m1+=n;
-          else if(t.includes('ii - trans')||t.includes('tipo ii')) m2+=n;
-          else if(t.includes('iii - serv')||t.includes('tipo iii')) m3+=n;
+          const t=(x.TIPO_INFRA||'').trim();
+          if(t==='Tipo III - Servicios') m3+=n;
+          else if(t==='Tipo II - Transformacion') m2+=n;
+          else if(t==='Tipo I - Produccion') m1+=n;
         });
         totT1+=m1; totT2+=m2; totT3+=m3;
         totalMods+=m1+m2+m3;
